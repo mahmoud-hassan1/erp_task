@@ -1,14 +1,15 @@
 import 'dart:io';
+import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/document.dart';
-import '../cubit/home_cubit.dart';
-import '../cubit/home_state.dart';
+import '../../../domain/entities/document.dart';
+import '../../cubit/home_cubit.dart';
+import '../../cubit/home_state.dart';
 
 class UploadDocumentDialog extends StatefulWidget {
   final String? parentFolderId;
-  final List<String> currentPath;
+  final String currentPath;
 
   const UploadDocumentDialog({
     super.key,
@@ -162,62 +163,61 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
         return;
       }
 
-      final document = Document(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        parentFolderId: widget.parentFolderId ?? '',
-        title: _titleController.text,
-        tags: _tagsController.text.split(',').map((e) => e.trim()).toList(),
-        type: _fileType ?? '',
-        docLink: '', // Will be set after upload
-        createdBy: 'current_user_email', // TODO: Get from auth
-        createdAt: DateTime.now(),
-        permissions: _isPublic ? {'*': 'view'} : {},
-        isPublic: _isPublic,
-        comments: [],
-        versionHistory: [],
-        currentVersion: 1,
-      );
+      // final document = Document(
+      //   id: DateTime.now().millisecondsSinceEpoch.toString(),
+      //   parentFolderId: widget.parentFolderId ?? '',
+      //   title: _titleController.text,
+      //   tags: _tagsController.text.split(',').map((e) => e.trim()).toList(),
+      //   type: _fileType ?? '',
+      //   docLink: '', // Will be set after upload
+      //   createdBy: context.read<AuthCubit>().getCurrentUserEmail() ?? '',
+      //   createdAt: DateTime.now(),
+      //   permissions: _isPublic ? {'*': 'view'} : {},
+      //   isPublic: _isPublic,
+      //   comments: [],
+      //   currentVersion: 1,
+      // );
 
       // Upload file and create document
       final bytes = await _selectedFile!.readAsBytes();
-      final result = await context.read<HomeCubit>().repository.uploadFile(
-            'documents/${document.id}',
-            bytes,
-            _selectedFile!.path.split('/').last,
-          );
+      // final result = await context.read<HomeCubit>().repository.uploadFile(
+      //       'documents/${document.id}',
+      //       bytes,
+      //       _selectedFile!.path.split('/').last,
+      //     );
 
-      result.fold(
-        (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error uploading file: $error')),
-          );
-        },
-        (docLink) async {
-          final updatedDocument = Document(
-            id: document.id,
-            parentFolderId: document.parentFolderId,
-            title: document.title,
-            tags: document.tags,
-            type: document.type,
-            docLink: docLink,
-            createdBy: document.createdBy,
-            createdAt: document.createdAt,
-            permissions: document.permissions,
-            isPublic: document.isPublic,
-            comments: document.comments,
-            versionHistory: [
-              Version(
-                version: 1,
-                docLink: docLink,
-                uploadedAt: DateTime.now(),
-              ),
-            ],
-            currentVersion: 1,
-          );
+      // result.fold(
+      //   (error) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       SnackBar(content: Text('Error uploading file: $error')),
+      //     );
+      //   },
+      //   (docLink) async {
+      //     final updatedDocument = Document(
+      //       id: document.id,
+      //       parentFolderId: document.parentFolderId,
+      //       title: document.title,
+      //       tags: document.tags,
+      //       type: document.type,
+      //       docLink: docLink,
+      //       createdBy: document.createdBy,
+      //       createdAt: document.createdAt,
+      //       permissions: document.permissions,
+      //       isPublic: document.isPublic,
+      //       comments: document.comments,
+      //       versionHistory: [
+      //         Version(
+      //           version: 1,
+      //           docLink: docLink,
+      //           uploadedAt: DateTime.now(),
+      //         ),
+      //       ],
+      //       currentVersion: 1,
+      //     );
 
-          await context.read<HomeCubit>().createDocument(updatedDocument);
-        },
-      );
+      //     await context.read<HomeCubit>().createDocument(updatedDocument);
+      //   },
+      // );
     }
   }
 } 

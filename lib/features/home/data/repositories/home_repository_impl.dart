@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,12 +21,15 @@ class HomeRepositoryImpl implements HomeRepository {
         _storage = storage ?? FirebaseStorage.instance;
 
   @override
-  Future<Either<Exception, List<Folder>>> getFolders(String? parentFolderId) async {
+  Future<Either<Exception, List<Folder>>> getFolders(
+      String? parentFolderId) async {
     try {
       final query = _firestore.collection('folders');
       final snapshot = parentFolderId == null
           ? await query.where('parentFolderId', isNull: true).get()
-          : await query.where('parentFolderId', isEqualTo: parentFolderId).get();
+          : await query
+              .where('parentFolderId', isEqualTo: parentFolderId)
+              .get();
 
       final folders = snapshot.docs
           .map((doc) => FolderModel.fromJson({...doc.data(), 'id': doc.id}))
@@ -38,12 +42,15 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
-  Future<Either<Exception, List<Document>>> getDocuments(String? parentFolderId) async {
+  Future<Either<Exception, List<Document>>> getDocuments(
+      String? parentFolderId) async {
     try {
       final query = _firestore.collection('documents');
       final snapshot = parentFolderId == null
           ? await query.where('parentFolderId', isNull: true).get()
-          : await query.where('parentFolderId', isEqualTo: parentFolderId).get();
+          : await query
+              .where('parentFolderId', isEqualTo: parentFolderId)
+              .get();
 
       final documents = snapshot.docs
           .map((doc) => DocumentModel.fromJson({...doc.data(), 'id': doc.id}))
@@ -58,8 +65,18 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<Either<Exception, void>> createFolder(Folder folder) async {
     try {
+      final folderModel = FolderModel(
+        id: folder.id,
+        title: folder.title,
+        parentFolderId: folder.parentFolderId,
+        createdBy: folder.createdBy,
+        createdAt: folder.createdAt,
+        permissions: folder.permissions,
+        isPublic: folder.isPublic,
+      );
+
       await _firestore.collection('folders').doc(folder.id).set(
-            (folder as FolderModel).toJson(),
+            folderModel.toJson(),
           );
       return const Right(null);
     } catch (e) {
@@ -68,13 +85,38 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
-  Future<Either<Exception, void>> createDocument(Document document) async {
+  Future<Either<Exception, void>> createDocument(
+      Document document, String path, File file) async {
     try {
-      await _firestore.collection('documents').doc(document.id).set(
-            (document as DocumentModel).toJson(),
+      final fileName = file.path.split('/').last;
+      final fileUrl = await uploadFile(
+          path, file.readAsBytesSync(), fileName);
+      return fileUrl.fold(
+        (error) => Left(error),
+        (url) async {
+          final documentModel = DocumentModel(
+            id: document.id,
+            title: fileName,
+            parentFolderId: document.parentFolderId,
+            type: document.type,
+            docLink: url,
+            createdBy: document.createdBy,
+            createdAt: document.createdAt,
+            permissions: document.permissions,
+            isPublic: document.isPublic,
+            comments: document.comments,
+            currentVersion: document.currentVersion,
+            tags: document.tags,
           );
-      return const Right(null);
+
+          await _firestore.collection('documents').add(
+                documentModel.toJson(),
+              );
+          return const Right(null);
+        },
+      );
     } catch (e) {
+      print("Error creating document: $e");
       return Left(Exception(e.toString()));
     }
   }
@@ -110,16 +152,17 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   @override
-  Future<Either<Exception, void>> addComment(String documentId, Comment comment) async {
+  Future<Either<Exception, void>> addComment(
+      String documentId, Comment comment) async {
     try {
+      final commentData = {
+        'userId': comment.userId,
+        'text': comment.text,
+        'createdAt': Timestamp.fromDate(comment.createdAt),
+      };
+
       await _firestore.collection('documents').doc(documentId).update({
-        'comments': FieldValue.arrayUnion([
-          {
-            'userId': comment.userId,
-            'text': comment.text,
-            'createdAt': Timestamp.fromDate(comment.createdAt),
-          }
-        ]),
+        'comments': FieldValue.arrayUnion([commentData]),
       });
       return const Right(null);
     } catch (e) {
@@ -127,24 +170,25 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  @override
-  Future<Either<Exception, void>> addVersion(String documentId, Version version) async {
-    try {
-      await _firestore.collection('documents').doc(documentId).update({
-        'versionHistory': FieldValue.arrayUnion([
-          {
-            'version': version.version,
-            'docLink': version.docLink,
-            'uploadedAt': Timestamp.fromDate(version.uploadedAt),
-          }
-        ]),
-        'currentVersion': version.version,
-      });
-      return const Right(null);
-    } catch (e) {
-      return Left(Exception(e.toString()));
-    }
-  }
+  // @override
+  // Future<Either<Exception, void>> addVersion(
+  //     String documentId, Version version) async {
+  //   try {
+  //     final versionData = {
+  //       'version': version.version,
+  //       'docLink': version.docLink,
+  //       'uploadedAt': Timestamp.fromDate(version.uploadedAt),
+  //     };
+
+  //     await _firestore.collection('documents').doc(documentId).update({
+  //       'versionHistory': FieldValue.arrayUnion([versionData]),
+  //       'currentVersion': version.version,
+  //     });
+  //     return const Right(null);
+  //   } catch (e) {
+  //     return Left(Exception(e.toString()));
+  //   }
+  // }
 
   @override
   Future<Either<Exception, String>> uploadFile(
@@ -156,9 +200,10 @@ class HomeRepositoryImpl implements HomeRepository {
       final ref = _storage.ref().child('$path/$fileName');
       await ref.putData(Uint8List.fromList(bytes));
       final downloadUrl = await ref.getDownloadURL();
+      print("downloadUrl: $downloadUrl");
       return Right(downloadUrl);
     } catch (e) {
       return Left(Exception(e.toString()));
     }
   }
-} 
+}

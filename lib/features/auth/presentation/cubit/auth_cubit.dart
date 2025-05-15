@@ -91,7 +91,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   String? getCurrentUserEmail()  {
     final result =  _authRepository.getCurrentUserEmail();
-    result.fold(
+    return result.fold(
       (error) {
         emit(GetEmailError(error.toString()));
         return null;

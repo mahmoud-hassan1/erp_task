@@ -3,6 +3,8 @@ import 'package:erp_task/features/auth/data/repositories/auth_repository_impl.da
 import 'package:erp_task/features/auth/domain/repositories/auth_repository.dart';
 import 'package:erp_task/features/home/data/repositories/home_repository_impl.dart';
 import 'package:erp_task/features/home/domain/repositories/home_repository.dart';
+import 'package:erp_task/features/home/domain/usecases/create_document.dart';
+import 'package:erp_task/features/home/domain/usecases/create_folder.dart';
 import 'package:erp_task/features/home/domain/usecases/get_documents.dart';
 import 'package:erp_task/features/home/domain/usecases/get_folders.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,9 +31,15 @@ Future<void> setup() async {
     ),
   );
   getIt.registerLazySingleton<GetFolders>(
-    () => GetFolders(getIt<HomeRepository>()),
+    () => GetFolders(getIt<HomeRepository>(), getIt<AuthRepository>()),
   );
   getIt.registerLazySingleton<GetDocuments>(
-    () => GetDocuments(getIt<HomeRepository>()),
+    () => GetDocuments(getIt<HomeRepository>(), getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<CreateFolder>(
+    () => CreateFolder(getIt<HomeRepository>(), getIt<AuthRepository>()),
+  );
+  getIt.registerLazySingleton<CreateDocument>(
+    () => CreateDocument(getIt<HomeRepository>(), getIt<AuthRepository>()),
   );
 }

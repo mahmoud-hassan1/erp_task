@@ -1,11 +1,13 @@
 import 'package:erp_task/features/auth/domain/repositories/auth_repository.dart';
 import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:erp_task/features/home/domain/repositories/home_repository.dart';
+import 'package:erp_task/features/home/domain/usecases/create_document.dart';
+import 'package:erp_task/features/home/domain/usecases/create_folder.dart';
 import 'package:erp_task/features/home/domain/usecases/get_documents.dart';
 import 'package:erp_task/features/home/domain/usecases/get_folders.dart';
 import 'package:erp_task/features/home/presentation/cubit/home_cubit.dart';
+import 'package:erp_task/features/home/presentation/views/add_document_view.dart';
 import 'package:erp_task/features/home/presentation/views/home_view.dart';
-import 'package:flutter/material.dart';
 import 'package:erp_task/features/auth/presentation/views/login_view.dart';
 import 'package:erp_task/features/auth/presentation/views/signup_view.dart';
 import 'package:erp_task/features/auth/presentation/views/email_verification_view.dart';
@@ -18,6 +20,7 @@ class AppRoutes {
   static const String signup = '/signup';
   static const String verifyEmail = '/verify-email';
   static const String home = '/home';
+  static const String addDocument = '/add-document';
   static final GoRouter router = GoRouter(
     initialLocation: login,
     routes: [
@@ -47,24 +50,44 @@ class AppRoutes {
         ),
       ),
       GoRoute(
-        path: home,
-        name: 'home',
-        builder: (context, state) => MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (context) =>
-                  AuthCubit(GetIt.instance.get<AuthRepository>()),
-            ),
-            BlocProvider(
-              create: (context) => HomeCubit(
-                getFolders: GetIt.instance.get<GetFolders>(),
-                getDocuments: GetIt.instance.get<GetDocuments>(),
-                repository: GetIt.instance.get<HomeRepository>(),
-              ),
-            ),
-          ],
-          child: const HomeView(),
-        ),
+          path: home,
+          name: 'home',
+          builder: (context, state) {
+            final extras = state.extra as List<dynamic>?;
+            final String path = extras?[1] ?? 'Document-Manager';
+            final parentFolderId = extras?[0];
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (context) =>
+                      AuthCubit(GetIt.instance.get<AuthRepository>()),
+                ),
+                BlocProvider(
+                  create: (context) => HomeCubit(
+                    getFolders: GetIt.instance.get<GetFolders>(),
+                    getDocuments: GetIt.instance.get<GetDocuments>(),
+                    repository: GetIt.instance.get<HomeRepository>(),
+                    createFolder: GetIt.instance.get<CreateFolder>(),
+                    createDocument: GetIt.instance.get<CreateDocument>(),
+                  )..loadContent(parentFolderId),
+                ),
+              ],
+              child: HomeView(path: path, parentFolderId: parentFolderId),
+            );
+          }),
+      GoRoute(
+        path: addDocument,
+        name: 'add-document',
+        builder: (context, state) {
+          final extras = state.extra as List<dynamic>?;
+          final parentFolderId = extras?[0] as String?;
+          final path = extras?[1] as String;
+          final cubit = extras?[2] as HomeCubit;
+          return BlocProvider.value(
+            value: cubit,
+            child: AddDocumentView(parentFolderId: parentFolderId, path: path),
+          );
+        },
       ),
     ],
   );

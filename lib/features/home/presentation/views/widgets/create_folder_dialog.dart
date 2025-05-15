@@ -1,12 +1,14 @@
+import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
+import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/folder.dart';
-import '../cubit/home_cubit.dart';
-import '../cubit/home_state.dart';
+import '../../../domain/entities/folder.dart';
+import '../../cubit/home_cubit.dart';
+import '../../cubit/home_state.dart';
 
 class CreateFolderDialog extends StatefulWidget {
   final String? parentFolderId;
-  final List<String> currentPath;
+  final String currentPath;
 
   const CreateFolderDialog({
     super.key,
@@ -39,9 +41,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
         } else {
           setState(() => _isLoading = false);
           if (state is HomeError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            showSnackBar(context, content: state.message);
           } else if (state is HomeLoaded) {
             Navigator.pop(context);
           }
@@ -104,14 +104,12 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text,
         parentFolderId: widget.parentFolderId,
-        createdBy: 'current_user_email', // TODO: Get from auth
+        createdBy:  '',
         createdAt: DateTime.now(),
         permissions: _isPublic ? {'*': 'view'} : {},
-        path: [...widget.currentPath, _titleController.text],
         isPublic: _isPublic,
       );
-
-      context.read<HomeCubit>().createFolder(folder);
+      context.read<HomeCubit>().createNewFolder(folder);
     }
   }
 } 

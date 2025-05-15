@@ -1,19 +1,21 @@
+import 'package:erp_task/features/home/domain/entities/permissions.dart';
+
 class Document {
   final String id;
-  final String parentFolderId;
+  final String? parentFolderId;
   final String title;
   final List<String> tags;
   final String type;
   final String docLink;
-  final String createdBy;
+   String createdBy;
   final DateTime createdAt;
-  final Map<String, String> permissions;
+  final Permissions permissions;
   final bool isPublic;
   final List<Comment> comments;
-  final List<Version> versionHistory;
+
   final int currentVersion;
 
-  const Document({
+   Document({
     required this.id,
     required this.parentFolderId,
     required this.title,
@@ -24,9 +26,7 @@ class Document {
     required this.createdAt,
     required this.permissions,
     required this.isPublic,
-    required this.comments,
-    required this.versionHistory,
-    required this.currentVersion,
+    required this.comments,    required this.currentVersion,
   });
 }
 
@@ -42,14 +42,14 @@ class Comment {
   });
 }
 
-class Version {
-  final int version;
-  final String docLink;
-  final DateTime uploadedAt;
+// class Version {
+//   final int version;
+//   final String docLink;
+//   final DateTime uploadedAt;
 
-  const Version({
-    required this.version,
-    required this.docLink,
-    required this.uploadedAt,
-  });
-} 
+//   const Version({
+//     required this.version,
+//     required this.docLink,
+//     required this.uploadedAt,
+//   });
+// } 

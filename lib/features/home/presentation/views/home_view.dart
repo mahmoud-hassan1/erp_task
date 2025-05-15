@@ -1,28 +1,29 @@
+import 'package:erp_task/core/utils/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../../domain/entities/folder.dart';
 import '../../domain/entities/document.dart';
-import '../widgets/create_folder_dialog.dart';
-import '../widgets/upload_document_dialog.dart';
-
+import 'widgets/create_folder_dialog.dart';
+import 'widgets/upload_document_dialog.dart';
 class HomeView extends StatelessWidget {
-  const HomeView({super.key});
-
+  const HomeView({super.key, required this.path, this.parentFolderId});
+  final String path;
+  final String? parentFolderId;
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeCubit, HomeState>(
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: state is HomeLoaded
-                ? Text(state.currentPath.join(' / '))
-                : const Text('Document Manager'),
-            leading: state is HomeLoaded && state.currentPath.length > 1
+            title: FittedBox(fit: BoxFit.scaleDown,child: Text(path)),
+              
+            leading: state is HomeLoaded && parentFolderId != null
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.read<HomeCubit>().navigateBack(),
+                    onPressed: () => context.pop(),
                   )
                 : null,
           ),
@@ -53,7 +54,7 @@ class HomeView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.read<HomeCubit>().loadContent(null),
+              onPressed: () => context.read<HomeCubit>().loadContent(parentFolderId),
               child: const Text('Retry'),
             ),
           ],
@@ -89,11 +90,16 @@ class HomeView extends StatelessWidget {
         );
       }
 
-      return ListView(
-        children: [
-          ...state.folders.map((folder) => _buildFolderTile(context, folder)),
-          ...state.documents.map((doc) => _buildDocumentTile(context, doc)),
-        ],
+      return RefreshIndicator(
+        onRefresh: () async {
+           context.read<HomeCubit>().loadContent(parentFolderId);
+        },
+        child: ListView(
+          children: [
+            ...state.folders.map((folder) => _buildFolderTile(context, folder)),
+            ...state.documents.map((doc) => _buildDocumentTile(context, doc)),
+          ],
+        ),
       );
     }
 
@@ -127,7 +133,7 @@ class HomeView extends StatelessWidget {
     return ListTile(
       leading: const Icon(Icons.folder),
       title: Text(folder.title),
-      onTap: () => context.read<HomeCubit>().navigateToFolder(folder),
+      onTap: () => context.push(AppRoutes.home, extra: [folder.id, '$path/${folder.title}']),
     );
   }
 
@@ -215,24 +221,25 @@ class HomeView extends StatelessWidget {
       builder: (dialogContext) => BlocProvider.value(
         value: homeCubit,
         child: CreateFolderDialog(
-          parentFolderId: currentState is HomeLoaded ? currentState.currentPath.last : null,
-          currentPath: currentState is HomeLoaded ? currentState.currentPath : [],
+          parentFolderId: parentFolderId ,
+          currentPath: path,
         ),
       ),
     );
   }
 
   void _showUploadDocumentDialog(BuildContext context, HomeCubit homeCubit) {
-    final currentState = homeCubit.state;
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: homeCubit,
-        child: UploadDocumentDialog(
-          parentFolderId: currentState is HomeLoaded ? currentState.currentPath.last : null,
-          currentPath: currentState is HomeLoaded ? currentState.currentPath : [],
-        ),
-      ),
-    );
+    GoRouter.of(context).push(AppRoutes.addDocument, extra: [parentFolderId, path,homeCubit]);
+    // final currentState = homeCubit.state;
+    // showDialog(
+    //   context: context,
+    //   builder: (dialogContext) => BlocProvider.value(
+    //     value: homeCubit,
+    //     child: UploadDocumentDialog(
+    //       parentFolderId: parentFolderId ,
+    //       currentPath: path,
+    //     ),
+    //   ),
+    // );
   }
 }
