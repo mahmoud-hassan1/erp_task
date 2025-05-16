@@ -17,10 +17,9 @@ class GetFolders {
         return currentUser.fold(
           (error) => Left(error),
           (user) {
-            return Right(folders
-                .where((folder) => folder.isPublic || folder.createdBy == user)
-                .toList()
-                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+            final filteredFolders = folders.where((folder) => folder.isPublic || folder.createdBy == user).toList();
+            filteredFolders.sort((a, b) => a.title.compareTo(b.title));
+            return Right(filteredFolders);
           },
         );
       },

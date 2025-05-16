@@ -60,31 +60,36 @@ class HomeCubit extends Cubit<HomeState> {
 
 
   Future<void> createNewFolder(Folder folder) async {
-    emit(HomeLoading());
-   print("dsaidshaui");
+    emit(FolderLoading());
     final result = await _createFolder(folder);
-    print("result: $result");
     result.fold(
-      (error) => emit(HomeError(error.toString())),
+      (error) => emit(FolderError(error.toString())),
       (_) { 
-        print("folder created");
+        emit(FolderLoaded(folder));
         loadContent(folder.parentFolderId);
-        emit(HomeLoaded(
-          folders: foldersList,
-          documents: documentsList,
-        ));
       },
     );
   }
 
   Future<void> createDocument(Document document, String path, File file) async {
     emit(DocumentLoading());
-    print("path: $path");
     final result = await _createDocument(document, path, file);
     result.fold(
       (error) => emit(DocumentError(error.toString())),
       (_) {
-        print("document created");
+
+        emit(DocumentLoaded(document));
+        loadContent(document.parentFolderId);
+      },
+    );
+  }
+
+  Future<void> updateDocument(Document document,String path,File? file) async {
+    emit(DocumentLoading());
+    final result = await _repository.updateDocument(document,path,file);
+    result.fold(
+      (error) => emit(DocumentError(error.toString())),
+      (_) {
         emit(DocumentLoaded(document));
         loadContent(document.parentFolderId);
       },
@@ -143,6 +148,17 @@ class HomeCubit extends Cubit<HomeState> {
     );
   }
 
+Future<void> updateFolder(Folder folder) async {
+  emit(FolderLoading());
+  final result = await _repository.updateFolder(folder);
+  result.fold(
+    (error) => emit(FolderError(error.toString())),
+    (_) {
+      emit(FolderLoaded(folder));
+      loadContent(folder.parentFolderId);
+    }
+  );
+}
   // Future<void> addVersion(String documentId, Version version) async {
   //   emit(HomeLoading());
 

@@ -17,7 +17,9 @@ class GetDocuments {
        return currentUser.fold(
           (error) => Left(error),
           (user) {
-            return Right(documents.where((doc) => doc.isPublic || doc.createdBy == user).toList());
+            final filteredDocuments = documents.where((doc) => doc.isPublic || doc.createdBy == user).toList();
+            filteredDocuments.sort((a, b) => a.title.compareTo(b.title));
+            return Right(filteredDocuments);
           },
         );
       },

@@ -20,4 +20,16 @@ class PermissionsModel extends Permissions {
       'view': view,
     };
   }
+  factory PermissionsModel.fromEntity(Permissions permissions) {
+    return PermissionsModel(
+      edit: permissions.edit,
+      view: permissions.view,
+    );
+  }
+  Permissions toEntity() {
+    return Permissions(
+      edit: edit,
+      view: view,
+    );
+  }
 }

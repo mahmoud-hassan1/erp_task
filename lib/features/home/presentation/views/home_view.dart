@@ -1,13 +1,20 @@
 import 'package:erp_task/core/utils/routes.dart';
+import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
+import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:erp_task/features/home/presentation/views/widgets/edit_folder_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 import '../../domain/entities/folder.dart';
 import '../../domain/entities/document.dart';
 import 'widgets/create_folder_dialog.dart';
-import 'widgets/upload_document_dialog.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+
 class HomeView extends StatelessWidget {
   const HomeView({super.key, required this.path, this.parentFolderId});
   final String path;
@@ -18,8 +25,7 @@ class HomeView extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: FittedBox(fit: BoxFit.scaleDown,child: Text(path)),
-              
+            title: FittedBox(fit: BoxFit.scaleDown, child: Text(path)),
             leading: state is HomeLoaded && parentFolderId != null
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back),
@@ -54,7 +60,8 @@ class HomeView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.read<HomeCubit>().loadContent(parentFolderId),
+              onPressed: () =>
+                  context.read<HomeCubit>().loadContent(parentFolderId),
               child: const Text('Retry'),
             ),
           ],
@@ -62,69 +69,55 @@ class HomeView extends StatelessWidget {
       );
     }
 
-    if (state is HomeLoaded) {
-      if (state.folders.isEmpty && state.documents.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.folder_open,
-                size: 64,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'This folder is empty',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tap the + button to add a folder or document',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      return RefreshIndicator(
-        onRefresh: () async {
-           context.read<HomeCubit>().loadContent(parentFolderId);
-        },
-        child: ListView(
+    if (context.read<HomeCubit>().foldersList.isEmpty &&
+        context.read<HomeCubit>().documentsList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ...state.folders.map((folder) => _buildFolderTile(context, folder)),
-            ...state.documents.map((doc) => _buildDocumentTile(context, doc)),
+            Icon(
+              Icons.folder_open,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This folder is empty',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap the + button to add a folder or document',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
+                  ),
+            ),
           ],
         ),
       );
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.folder_open,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Welcome to Document Manager',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap the + button to create your first folder or document',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-          ),
-        ],
+    return ModalProgressHUD(
+      inAsyncCall: state is DocumentLoading || state is FolderLoading,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          context.read<HomeCubit>().loadContent(parentFolderId);
+        },
+        child: ListView(
+          children: [
+            ...context
+                .read<HomeCubit>()
+                .foldersList
+                .map((folder) => _buildFolderTile(context, folder)),
+            ...context
+                .read<HomeCubit>()
+                .documentsList
+                .map((doc) => _buildDocumentTile(context, doc)),
+          ],
+        ),
       ),
     );
   }
@@ -133,7 +126,13 @@ class HomeView extends StatelessWidget {
     return ListTile(
       leading: const Icon(Icons.folder),
       title: Text(folder.title),
-      onTap: () => context.push(AppRoutes.home, extra: [folder.id, '$path/${folder.title}']),
+      onTap: () => context
+          .push(AppRoutes.home, extra: [folder.id, '$path/${folder.title}']),
+      onLongPress: () =>
+          folder.createdBy == context.read<AuthCubit>().getCurrentUserEmail()
+              ? _showEditFolderDialog(context, folder)
+              : showSnackBar(context,
+                  content: 'Only the folder owner can edit the folder'),
     );
   }
 
@@ -143,6 +142,18 @@ class HomeView extends StatelessWidget {
       title: Text(document.title),
       subtitle: Text(document.type),
       onTap: () => _openDocument(context, document),
+      onLongPress: () => document.createdBy ==
+                  context.read<AuthCubit>().getCurrentUserEmail() ||
+              document.permissions.edit
+                  .contains(context.read<AuthCubit>().getCurrentUserEmail())
+          ? GoRouter.of(context).push(AppRoutes.editDocument, extra: [
+              document,
+              parentFolderId,
+              path,
+              context.read<HomeCubit>()
+            ])
+          : showSnackBar(context,
+              content: 'Only the document owner can edit the document'),
     );
   }
 
@@ -161,12 +172,50 @@ class HomeView extends StatelessWidget {
     }
   }
 
-  void _openDocument(BuildContext context, Document document) {
-    // TODO: Implement document viewer
-    // For now, just show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening ${document.title}')),
-    );
+  void _openDocument(BuildContext context, Document document) async {
+    try {
+      if (document.type.toLowerCase() == 'pdf') {
+        // Open PDF in the app using SfPdfViewer
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(
+                title: Text(document.title),
+              ),
+              body: SfPdfViewer.network(document.docLink),
+            ),
+          ),
+        );
+      } else {
+        // For other file types, try to open with the device's default app
+        final Uri url = Uri.parse(document.docLink);
+        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+          // If URL launch fails, try opening as a file
+          final result = await OpenFile.open(document.docLink);
+          if (result.type != ResultType.done) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text('Could not open the document: ${result.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening document: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showCreateDialog(BuildContext context) {
@@ -204,7 +253,8 @@ class HomeView extends StatelessWidget {
                 title: const Text('Upload Document'),
                 onTap: () {
                   Navigator.pop(bottomSheetContext);
-                  _showUploadDocumentDialog(context, homeCubit);
+                  GoRouter.of(context).push(AppRoutes.addDocument,
+                      extra: [parentFolderId, path, homeCubit]);
                 },
               ),
             ],
@@ -221,25 +271,24 @@ class HomeView extends StatelessWidget {
       builder: (dialogContext) => BlocProvider.value(
         value: homeCubit,
         child: CreateFolderDialog(
-          parentFolderId: parentFolderId ,
+          parentFolderId: parentFolderId,
           currentPath: path,
         ),
       ),
     );
   }
 
-  void _showUploadDocumentDialog(BuildContext context, HomeCubit homeCubit) {
-    GoRouter.of(context).push(AppRoutes.addDocument, extra: [parentFolderId, path,homeCubit]);
-    // final currentState = homeCubit.state;
-    // showDialog(
-    //   context: context,
-    //   builder: (dialogContext) => BlocProvider.value(
-    //     value: homeCubit,
-    //     child: UploadDocumentDialog(
-    //       parentFolderId: parentFolderId ,
-    //       currentPath: path,
-    //     ),
-    //   ),
-    // );
+  void _showEditFolderDialog(BuildContext context, Folder folder) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<HomeCubit>(),
+        child: EditFolderDialog(
+          parentFolderId: parentFolderId,
+          currentPath: path,
+          folder: folder,
+        ),
+      ),
+    );
   }
 }

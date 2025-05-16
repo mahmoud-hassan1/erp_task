@@ -34,3 +34,16 @@ class DocumentError extends HomeState {
 
   DocumentError(this.message);
 }
+
+class FolderLoading extends HomeState {}
+class FolderLoaded extends HomeState {
+  final Folder folder;
+
+  FolderLoaded(this.folder);
+
+}
+class FolderError extends HomeState {
+  final String message;
+
+  FolderError(this.message);
+}

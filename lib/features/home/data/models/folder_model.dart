@@ -35,4 +35,27 @@ class FolderModel extends Folder {
       'isPublic': isPublic,
     };
   }
+  factory FolderModel.fromEntity(Folder folder) {
+    return FolderModel(
+      id: folder.id,
+      title: folder.title,
+      parentFolderId: folder.parentFolderId,
+      createdBy: folder.createdBy,
+      createdAt: folder.createdAt,
+      permissions: folder.permissions,
+      isPublic: folder.isPublic,
+    );
+  }
+
+  Folder toEntity() {
+    return Folder(
+      id: id,
+      title: title,
+      parentFolderId: parentFolderId,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      permissions: permissions,
+      isPublic: isPublic,
+    );
+  }
 } 

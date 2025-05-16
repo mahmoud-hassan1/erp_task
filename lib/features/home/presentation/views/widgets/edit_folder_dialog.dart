@@ -6,25 +6,33 @@ import '../../../domain/entities/folder.dart';
 import '../../cubit/home_cubit.dart';
 import '../../cubit/home_state.dart';
 
-class CreateFolderDialog extends StatefulWidget {
+class EditFolderDialog extends StatefulWidget {
   final String? parentFolderId;
   final String currentPath;
+  final Folder folder;
 
-  const CreateFolderDialog({
+  const EditFolderDialog({
     super.key,
     this.parentFolderId,
     required this.currentPath,
+    required this.folder,
   });
 
   @override
-  State<CreateFolderDialog> createState() => _CreateFolderDialogState();
+  State<EditFolderDialog> createState() => _EditFolderDialogState();
 }
 
-class _CreateFolderDialogState extends State<CreateFolderDialog> {
+class _EditFolderDialogState extends State<EditFolderDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   bool _isPublic = false;
 
+ @override
+  void initState() {
+    _titleController.text = widget.folder.title;
+    _isPublic = widget.folder.isPublic;
+    super.initState();
+  }
   @override
   void dispose() {
     _titleController.dispose();
@@ -37,18 +45,18 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
       listener: (context, state) {
         if (state is FolderLoading) {
         } 
-         else if (state is FolderError) {
-            showSnackBar(context, content: state.message);
-          } 
-          else if (state is FolderLoaded) {
-            Navigator.pop(context);
-          }
-        
+        else if (state is FolderError) {
+          showSnackBar(context, content: state.message);
+        } 
+        else if (state is FolderLoaded) {
+          Navigator.pop(context);
+        }
+      
       },
       builder: (context, state) {
         return AlertDialog(
           title: const Text('Create New Folder'),
-          content: Form(
+        content: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -83,34 +91,20 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: state is FolderLoading ? null : _createFolder,
-            child: state is FolderLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Create'),
+            onPressed: state is FolderLoading ? null : _updateFolder,
+            child: const Text('Save'),
           ),
         ],
       );
-      }
-    );
-    
   }
+    );}
 
-  void _createFolder() {
+
+  void  _updateFolder() {
     if (_formKey.currentState?.validate() ?? false) {
-      final folder = Folder(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        parentFolderId: widget.parentFolderId,
-        createdBy:  '',
-        createdAt: DateTime.now(),
-        permissions: _isPublic ? {'*': 'view'} : {},
-        isPublic: _isPublic,
-      );
-      context.read<HomeCubit>().createNewFolder(folder);
+      widget.folder.title = _titleController.text;
+      widget.folder.isPublic = _isPublic;
+      context.read<HomeCubit>().updateFolder(widget.folder);
     }
   }
 } 

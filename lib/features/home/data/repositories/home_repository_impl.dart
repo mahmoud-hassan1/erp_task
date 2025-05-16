@@ -65,15 +65,7 @@ class HomeRepositoryImpl implements HomeRepository {
   @override
   Future<Either<Exception, void>> createFolder(Folder folder) async {
     try {
-      final folderModel = FolderModel(
-        id: folder.id,
-        title: folder.title,
-        parentFolderId: folder.parentFolderId,
-        createdBy: folder.createdBy,
-        createdAt: folder.createdAt,
-        permissions: folder.permissions,
-        isPublic: folder.isPublic,
-      );
+      final folderModel = FolderModel.fromEntity(folder);
 
       await _firestore.collection('folders').doc(folder.id).set(
             folderModel.toJson(),
@@ -94,20 +86,9 @@ class HomeRepositoryImpl implements HomeRepository {
       return fileUrl.fold(
         (error) => Left(error),
         (url) async {
-          final documentModel = DocumentModel(
-            id: document.id,
-            title: fileName,
-            parentFolderId: document.parentFolderId,
-            type: document.type,
-            docLink: url,
-            createdBy: document.createdBy,
-            createdAt: document.createdAt,
-            permissions: document.permissions,
-            isPublic: document.isPublic,
-            comments: document.comments,
-            currentVersion: document.currentVersion,
-            tags: document.tags,
-          );
+          document.docLink = url;
+          document.title = fileName;
+          final documentModel = DocumentModel.fromEntity(document);
 
           await _firestore.collection('documents').add(
                 documentModel.toJson(),
@@ -121,35 +102,35 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  @override
-  Future<Either<Exception, void>> updateFolderPermissions(
-    String folderId,
-    Map<String, String> permissions,
-  ) async {
-    try {
-      await _firestore.collection('folders').doc(folderId).update({
-        'permissions': permissions,
-      });
-      return const Right(null);
-    } catch (e) {
-      return Left(Exception(e.toString()));
-    }
-  }
+  // @override
+  // Future<Either<Exception, void>> updateFolderPermissions(
+  //   String folderId,
+  //   Map<String, String> permissions,
+  // ) async {
+  //   try {
+  //     await _firestore.collection('folders').doc(folderId).update({
+  //       'permissions': permissions,
+  //     });
+  //     return const Right(null);
+  //   } catch (e) {
+  //     return Left(Exception(e.toString()));
+  //   }
+  // }
 
-  @override
-  Future<Either<Exception, void>> updateDocumentPermissions(
-    String documentId,
-    Map<String, String> permissions,
-  ) async {
-    try {
-      await _firestore.collection('documents').doc(documentId).update({
-        'permissions': permissions,
-      });
-      return const Right(null);
-    } catch (e) {
-      return Left(Exception(e.toString()));
-    }
-  }
+  // @override
+  // Future<Either<Exception, void>> updateDocumentPermissions(
+  //   String documentId,
+  //   Map<String, String> permissions,
+  // ) async {
+  //   try {
+  //     await _firestore.collection('documents').doc(documentId).update({
+  //       'permissions': permissions,
+  //     });
+  //     return const Right(null);
+  //   } catch (e) {
+  //     return Left(Exception(e.toString()));
+  //   }
+  // }
 
   @override
   Future<Either<Exception, void>> addComment(
@@ -206,4 +187,38 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(Exception(e.toString()));
     }
   }
+  @override
+  Future<Either<Exception, void>> updateFolder(Folder folder) async {
+    try {
+      await _firestore.collection('folders').doc(folder.id).update(FolderModel.fromEntity(folder).toJson());
+      return const Right(null);
+    } catch (e) {
+      return Left(Exception(e.toString()));
+    }
+  }
+  @override
+  Future<Either<Exception, void>> updateDocument(Document document,String path,File? file) async {
+    try {
+      if (file != null) {
+        final fileName = file.path.split('/').last;
+        final fileUrl = await uploadFile(
+            path, file.readAsBytesSync(), fileName);
+        return fileUrl.fold(
+          (error) => Left(error),
+          (url) async {
+            document.docLink = url;
+            document.title = fileName;
+            await _firestore.collection('documents').doc(document.id).update(DocumentModel.fromEntity(document).toJson());
+            return const Right(null);
+          },
+        );
+      }
+      await _firestore.collection('documents').doc(document.id).update(DocumentModel.fromEntity(document).toJson());
+      return const Right(null);
+    } catch (e) { 
+      return Left(Exception(e.toString()));
+    }
+  }
 }
+
+

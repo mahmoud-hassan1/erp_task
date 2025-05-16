@@ -11,26 +11,40 @@ import 'dart:io';
 import 'package:go_router/go_router.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
-class AddDocumentView extends StatefulWidget {
-  const AddDocumentView(
-      {super.key, required this.parentFolderId, required this.path});
+class EditDocumentView extends StatefulWidget {
+  const EditDocumentView({
+    super.key, 
+    required this.document,
+    required this.parentFolderId, 
+    required this.path
+  });
+  
+  final Document document;
   final String? parentFolderId;
   final String path;
 
   @override
-  State<AddDocumentView> createState() => _AddDocumentViewState();
+  State<EditDocumentView> createState() => _EditDocumentViewState();
 }
 
-class _AddDocumentViewState extends State<AddDocumentView> {
-  File? _selectedFile;
-  bool _isPublic = false;
-  final List<String> _editPermissions = [];
-  final List<String> _viewPermissions = [];
+class _EditDocumentViewState extends State<EditDocumentView> {
+   File? _selectedFile;
+  late bool _isPublic;
+  late final List<String> _editPermissions;
+  late final List<String> _viewPermissions;
   final TextEditingController _viewEmailController = TextEditingController();
   final TextEditingController _editEmailController = TextEditingController();
   final FocusNode _viewEmailFocusNode = FocusNode();
   final FocusNode _editEmailFocusNode = FocusNode();
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _isPublic = widget.document.isPublic;
+    _editPermissions = List.from(widget.document.permissions.edit);
+    _viewPermissions = List.from(widget.document.permissions.view);
+  }
 
   bool _isValidFileType(String fileName) {
     final extension = fileName.toLowerCase().split('.').last;
@@ -41,34 +55,21 @@ class _AddDocumentViewState extends State<AddDocumentView> {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx'],
-      withData: true,
     );
     
     if (result != null) {
       final fileName = result.files.single.name;
-      final fileSize = result.files.single.size;
-      const maxSize = 100 * 1024 * 1024; // 100MB in bytes
-
-      if (!_isValidFileType(fileName)) {
+      if (_isValidFileType(fileName)) {
+        setState(() {
+          _selectedFile = File(result.files.single.path!);
+          _errorMessage = null;
+        });
+      } else {
         setState(() {
           _errorMessage = 'Please select a valid file type (PDF, Word, or Excel)';
           _selectedFile = null;
         });
-        return;
       }
-
-      if (fileSize > maxSize) {
-        setState(() {
-          _errorMessage = 'File size must be less than 100MB';
-          _selectedFile = null;
-        });
-        return;
-      }
-
-      setState(() {
-        _selectedFile = File(result.files.single.path!);
-        _errorMessage = null;
-      });
     }
   }
 
@@ -80,6 +81,7 @@ class _AddDocumentViewState extends State<AddDocumentView> {
       });
     }
   }
+
   void _addViewPermission() {
     if (_viewEmailController.text.isNotEmpty) {
       setState(() {
@@ -88,36 +90,37 @@ class _AddDocumentViewState extends State<AddDocumentView> {
       });
     }
   }
+
   void _removeEditPermission(String email) {
     setState(() {
       _editPermissions.remove(email);
     });
   }
- void _removeViewPermission(String email) {
+
+  void _removeViewPermission(String email) {
     setState(() {
       _viewPermissions.remove(email);
     });
   }
+
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<HomeCubit>();
-    // cubit.test();
     return BlocConsumer<HomeCubit, HomeState>(
       listener: (context, state) {
-          if(state is DocumentError){
-            showSnackBar(context, content: state.message);
-          }
-          else if(state is DocumentLoaded){
-            showSnackBar(context, content: 'Document created successfully');
-            context.pop();
-          }
-       },
+        if(state is DocumentError){
+          showSnackBar(context, content: state.message);
+        }
+        else if(state is DocumentLoaded){
+          showSnackBar(context, content: 'Document updated successfully');
+          context.pop();
+        }
+      },
       builder: (context, state) {
         return ModalProgressHUD(
           inAsyncCall: state is DocumentLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Add Document'),
+              title: const Text('Edit Document'),
             ),
             body: BlocBuilder<HomeCubit, HomeState>(
               builder: (context, state) {
@@ -130,7 +133,7 @@ class _AddDocumentViewState extends State<AddDocumentView> {
                         onPressed: _pickFile,
                         icon: const Icon(Icons.upload_file),
                         label: Text(
-                            _selectedFile?.path.split('/').last ?? 'Select File'),
+                            _selectedFile?.path.split('/').last ?? widget.document.title),
                       ),
                       if (_errorMessage != null)
                         Padding(
@@ -139,8 +142,6 @@ class _AddDocumentViewState extends State<AddDocumentView> {
                             _errorMessage!,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.error,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -150,38 +151,37 @@ class _AddDocumentViewState extends State<AddDocumentView> {
                         value: _isPublic,
                         onChanged: (value) => setState(() => _isPublic = value),
                       ),
-                    
-                       const SizedBox(height: 16),
-                        const Text('Add Edit Permissions:'),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _editEmailController,
-                                focusNode: _editEmailFocusNode,
-                                onTapOutside: (value) => _editEmailFocusNode.unfocus(),
-                                decoration: const InputDecoration(
-                                  hintText: 'Enter email',
-                                  border: OutlineInputBorder(),
-                                ),
+                      const SizedBox(height: 16),
+                      const Text('Add Edit Permissions:'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _editEmailController,
+                              focusNode: _editEmailFocusNode,
+                              onTapOutside: (value) => _editEmailFocusNode.unfocus(),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter email',
+                                border: OutlineInputBorder(),
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: _addEditPermission,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: _addEditPermission,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ..._editPermissions.map((email) => ListTile(
+                            title: Text(email),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.remove_circle),
+                              onPressed: () => _removeEditPermission(email),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ..._editPermissions.map((email) => ListTile(
-                              title: Text(email),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.remove_circle),
-                                onPressed: () => _removeEditPermission(email),
-                              ),
-                            )),
-                              if (!_isPublic) ...[
+                          )),
+                      if (!_isPublic) ...[
                         const SizedBox(height: 16),
                         const Text('Add View Permissions:'),
                         const SizedBox(height: 8),
@@ -215,29 +215,27 @@ class _AddDocumentViewState extends State<AddDocumentView> {
                       ],
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: _selectedFile == null
-                            ? null
-                            : () {
-                              final Document document = Document(
-                                id: '',
-                                parentFolderId: widget.parentFolderId,
-                                title: _selectedFile?.path.split('/').last ?? '',
-                                tags: [],
-                                type: _selectedFile?.path.split('.').last ?? '',
-                                docLink: '',
-                                createdBy: '',
-                                createdAt: DateTime.now(),
-                                currentVersion: 0,
-                                isPublic: _isPublic,
-                                permissions: Permissions(
-                                  view: _isPublic ? [] : _viewPermissions,
-                                  edit: _editPermissions,
-                                ),
-                                comments: [],       
-                              );
-                              context.read<HomeCubit>().createDocument(document, widget.path, _selectedFile!);
-                              },
-                        child: const Text('Create Document'),
+                        onPressed: () {
+                          final Document updatedDocument = Document(
+                            id: widget.document.id,
+                            parentFolderId: widget.parentFolderId,
+                            title: _selectedFile?.path.split('/').last ?? widget.document.title,
+                            tags: widget.document.tags,
+                            type: _selectedFile?.path.split('.').last ?? widget.document.type,
+                            docLink: widget.document.docLink,
+                            createdBy: widget.document.createdBy,
+                            createdAt: widget.document.createdAt,
+                            currentVersion: widget.document.currentVersion + 1,
+                            isPublic: _isPublic,
+                            permissions: Permissions(
+                              view: _isPublic ? [] : _viewPermissions,
+                              edit: _editPermissions,
+                            ),
+                            comments: widget.document.comments,
+                          );
+                          context.read<HomeCubit>().updateDocument(updatedDocument, widget.path, _selectedFile);
+                        },
+                        child: const Text('Update Document'),
                       ),
                     ],
                   ),

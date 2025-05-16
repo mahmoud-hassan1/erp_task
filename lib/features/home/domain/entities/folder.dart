@@ -1,12 +1,12 @@
 class Folder {
   final String id;
-  final String title;
+   String title;
   final String? parentFolderId;
    String createdBy;
   final DateTime createdAt;
   final Map<String, String> permissions;
 
-  final bool isPublic;
+   bool isPublic;
    Folder({
     required this.id,
     required this.title,

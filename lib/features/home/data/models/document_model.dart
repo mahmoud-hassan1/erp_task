@@ -53,7 +53,7 @@ class DocumentModel extends Document {
       'docLink': docLink,
       'createdBy': createdBy,
       'createdAt': Timestamp.fromDate(createdAt),
-      'permissions': PermissionsModel(edit: permissions.edit, view: permissions.view).toJson(),
+      'permissions': PermissionsModel.fromEntity(permissions).toJson(),
       'isPublic': isPublic,
       'comments': comments
           .map((e) => {
@@ -64,5 +64,38 @@ class DocumentModel extends Document {
           .toList(),
       'currentVersion': currentVersion,
     };
+  }
+  factory DocumentModel.fromEntity(Document document) {
+    return DocumentModel(
+      id: document.id,
+      parentFolderId: document.parentFolderId,
+      title: document.title,
+      tags: document.tags,
+      type: document.type,
+      docLink: document.docLink,
+      createdBy: document.createdBy,
+      createdAt: document.createdAt,
+      permissions: document.permissions,
+      isPublic: document.isPublic,
+      comments: document.comments,
+      currentVersion: document.currentVersion,
+    );
+  }
+
+  Document toEntity() {
+    return Document(
+      id: id,
+      parentFolderId: parentFolderId,
+      title: title,
+      tags: tags,
+      type: type,
+      docLink: docLink,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      permissions: permissions,
+      isPublic: isPublic,
+      comments: comments,
+      currentVersion: currentVersion,
+    );
   }
 } 

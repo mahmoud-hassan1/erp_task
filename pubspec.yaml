@@ -49,7 +49,7 @@ dependencies:
   path_provider: ^2.1.5
   syncfusion_flutter_pdfviewer: ^29.1.41
   open_file: ^3.5.10
-
+  url_launcher: ^6.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -19,6 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Document Manager',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
       routerConfig: AppRoutes.router,
     );
   }

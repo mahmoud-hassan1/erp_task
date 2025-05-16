@@ -3,10 +3,10 @@ import 'package:erp_task/features/home/domain/entities/permissions.dart';
 class Document {
   final String id;
   final String? parentFolderId;
-  final String title;
+   String title;
   final List<String> tags;
   final String type;
-  final String docLink;
+   String docLink;
    String createdBy;
   final DateTime createdAt;
   final Permissions permissions;
