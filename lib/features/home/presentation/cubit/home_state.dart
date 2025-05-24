@@ -25,9 +25,9 @@ class HomeError extends HomeState {
 } 
 class DocumentLoading extends HomeState {}
 class DocumentLoaded extends HomeState {
-  final Document document;
+  String message;
 
-  DocumentLoaded(this.document);
+  DocumentLoaded(this.message);
 }
 class DocumentError extends HomeState {
   final String message;
@@ -37,9 +37,9 @@ class DocumentError extends HomeState {
 
 class FolderLoading extends HomeState {}
 class FolderLoaded extends HomeState {
-  final Folder folder;
+  String message;
 
-  FolderLoaded(this.folder);
+  FolderLoaded(this.message);
 
 }
 class FolderError extends HomeState {

@@ -1,10 +1,9 @@
 import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
-import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/folder.dart';
-import '../../cubit/home_cubit.dart';
-import '../../cubit/home_state.dart';
+import '../../../../domain/entities/folder.dart';
+import '../../../cubit/home_cubit.dart';
+import '../../../cubit/home_state.dart';
 
 class EditFolderDialog extends StatefulWidget {
   final String? parentFolderId;
@@ -49,6 +48,7 @@ class _EditFolderDialogState extends State<EditFolderDialog> {
           showSnackBar(context, content: state.message);
         } 
         else if (state is FolderLoaded) {
+          showSnackBar(context, content: state.message);
           Navigator.pop(context);
         }
       
@@ -89,6 +89,10 @@ class _EditFolderDialogState extends State<EditFolderDialog> {
           TextButton(
             onPressed: state is FolderLoading ? null : () => Navigator.pop(context),
             child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: state is FolderLoading ? null : () => context.read<HomeCubit>().deleteFolder(widget.folder),
+            child: const Text('Delete',style: TextStyle(color: Colors.red),),
           ),
           ElevatedButton(
             onPressed: state is FolderLoading ? null : _updateFolder,

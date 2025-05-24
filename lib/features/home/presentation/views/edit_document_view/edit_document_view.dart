@@ -1,4 +1,5 @@
 import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
+import 'package:erp_task/features/auth/domain/repositories/auth_repository.dart';
 import 'package:erp_task/features/home/domain/entities/document.dart';
 import 'package:erp_task/features/home/domain/entities/permissions.dart';
 import 'package:erp_task/features/home/presentation/cubit/home_cubit.dart';
@@ -6,6 +7,7 @@ import 'package:erp_task/features/home/presentation/cubit/home_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:get_it/get_it.dart';
 import 'dart:io';
 
 import 'package:go_router/go_router.dart';
@@ -37,13 +39,14 @@ class _EditDocumentViewState extends State<EditDocumentView> {
   final FocusNode _viewEmailFocusNode = FocusNode();
   final FocusNode _editEmailFocusNode = FocusNode();
   String? _errorMessage;
-
+  String? _currentUserEmail;
   @override
   void initState() {
     super.initState();
     _isPublic = widget.document.isPublic;
     _editPermissions = List.from(widget.document.permissions.edit);
     _viewPermissions = List.from(widget.document.permissions.view);
+    _currentUserEmail = GetIt.instance<AuthRepository>().getCurrentUser().fold((l) => null, (r) => r!.email);
   }
 
   bool _isValidFileType(String fileName) {
@@ -102,7 +105,14 @@ class _EditDocumentViewState extends State<EditDocumentView> {
       _viewPermissions.remove(email);
     });
   }
-
+  bool canDelete(){
+    return widget.document.createdBy == _currentUserEmail;
+  }
+  bool canUpdate(){
+   final bool owner= widget.document.createdBy == _currentUserEmail;
+   final permissions= widget.document.permissions.edit.contains(_currentUserEmail) ;
+   return owner || permissions;
+  }
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<HomeCubit, HomeState>(
@@ -111,7 +121,7 @@ class _EditDocumentViewState extends State<EditDocumentView> {
           showSnackBar(context, content: state.message);
         }
         else if(state is DocumentLoaded){
-          showSnackBar(context, content: 'Document updated successfully');
+          showSnackBar(context, content: state.message);
           context.pop();
         }
       },
@@ -214,6 +224,16 @@ class _EditDocumentViewState extends State<EditDocumentView> {
                             )),
                       ],
                       const SizedBox(height: 24),
+                      if(canDelete())
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<HomeCubit>().deleteDocument(widget.document);
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        child: const Text('Delete Document'),
+                      ),
+                      const SizedBox(height: 32),
+                      if(canUpdate())
                       ElevatedButton(
                         onPressed: () {
                           final Document updatedDocument = Document(

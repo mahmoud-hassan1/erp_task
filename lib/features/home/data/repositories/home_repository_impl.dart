@@ -97,7 +97,6 @@ class HomeRepositoryImpl implements HomeRepository {
         },
       );
     } catch (e) {
-      print("Error creating document: $e");
       return Left(Exception(e.toString()));
     }
   }
@@ -181,7 +180,6 @@ class HomeRepositoryImpl implements HomeRepository {
       final ref = _storage.ref().child('$path/$fileName');
       await ref.putData(Uint8List.fromList(bytes));
       final downloadUrl = await ref.getDownloadURL();
-      print("downloadUrl: $downloadUrl");
       return Right(downloadUrl);
     } catch (e) {
       return Left(Exception(e.toString()));
@@ -219,6 +217,61 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(Exception(e.toString()));
     }
   }
-}
+  @override
+  Future<Either<Exception, void>> deleteDocument(Document document) async {
+    try {
+      // Extract the storage path from the download URL
+      final uri = Uri.parse(document.docLink);
+      final path = uri.path.split('/o/').last.split('?').first;
+      final decodedPath = Uri.decodeFull(path);
+      
+      // Delete from storage
+      await _storage.ref().child(decodedPath).delete();
+      
+      // Delete from Firestore
+      await _firestore.collection('documents').doc(document.id).delete();
+      
+      return const Right(null);
+    } catch (e) {
+      return Left(Exception(e.toString()));
+    }
+  }
+  @override
+  Future<Either<Exception, void>> deleteFolder(Folder folder) async {
+    try {
+      // First, get all subfolders
+      final subfoldersQuery = await _firestore
+          .collection('folders')
+          .where('parentFolderId', isEqualTo: folder.id)
+          .get();
 
+      // Recursively delete each subfolder
+      for (var subfolderDoc in subfoldersQuery.docs) {
+        final subfolder = FolderModel.fromJson({...subfolderDoc.data(), 'id': subfolderDoc.id});
+        await deleteFolder(subfolder.toEntity());
+      }
+
+      // Get all documents in this folder
+      final documentsQuery = await _firestore
+          .collection('documents')
+          .where('parentFolderId', isEqualTo: folder.id)
+          .get();
+
+      // Delete all documents in this folder
+      for (var doc in documentsQuery.docs) {
+        final document = DocumentModel.fromJson({...doc.data(), 'id': doc.id});
+        
+        // Delete the document (this will handle both storage and Firestore)
+        await deleteDocument(document.toEntity());
+      }
+
+      // Finally, delete the folder itself
+      await _firestore.collection('folders').doc(folder.id).delete();
+      
+      return const Right(null);
+    } catch (e) {
+      return Left(Exception(e.toString()));
+    }
+  }
+}
 

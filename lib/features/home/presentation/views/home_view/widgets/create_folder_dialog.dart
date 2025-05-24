@@ -1,10 +1,9 @@
 import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
-import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/folder.dart';
-import '../../cubit/home_cubit.dart';
-import '../../cubit/home_state.dart';
+import '../../../../domain/entities/folder.dart';
+import '../../../cubit/home_cubit.dart';
+import '../../../cubit/home_state.dart';
 
 class CreateFolderDialog extends StatefulWidget {
   final String? parentFolderId;

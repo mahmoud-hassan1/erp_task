@@ -74,7 +74,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Exception, User?>> getCurrentUser() async {
+  Either<Exception, User?> getCurrentUser() {
     try {
       return Right(_firebaseAuth.currentUser);
     } catch (e) {

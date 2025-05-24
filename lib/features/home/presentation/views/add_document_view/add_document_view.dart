@@ -100,15 +100,14 @@ class _AddDocumentViewState extends State<AddDocumentView> {
   }
   @override
   Widget build(BuildContext context) {
-    final cubit = context.read<HomeCubit>();
-    // cubit.test();
+
     return BlocConsumer<HomeCubit, HomeState>(
       listener: (context, state) {
           if(state is DocumentError){
             showSnackBar(context, content: state.message);
           }
           else if(state is DocumentLoaded){
-            showSnackBar(context, content: 'Document created successfully');
+            showSnackBar(context, content: state.message);
             context.pop();
           }
        },

@@ -16,7 +16,7 @@ abstract class AuthRepository {
   
   Future<Either<Exception, void>> signOut();
   
-  Future<Either<Exception, User?>> getCurrentUser();
+  Either<Exception, User?> getCurrentUser();
   
   Future<Either<Exception, bool>> isEmailVerified();
   Either<Exception, String> getCurrentUserEmail();

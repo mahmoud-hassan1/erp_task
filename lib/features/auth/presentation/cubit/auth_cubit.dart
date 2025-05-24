@@ -44,7 +44,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> checkAuthStatus() async {
     emit(AuthLoading());
-    final result = await _authRepository.getCurrentUser();
+    final result =  _authRepository.getCurrentUser();
     result.fold(
       (error) => emit(AuthError(error.toString())),
       (user) {
@@ -74,7 +74,7 @@ class AuthCubit extends Cubit<AuthState> {
     result.fold(
       (error) => emit(AuthError(error.toString())),
       (_) async {
-        final userResult = await _authRepository.getCurrentUser();
+        final userResult =  _authRepository.getCurrentUser();
         userResult.fold(
           (error) => emit(AuthError(error.toString())),
           (user) {

@@ -26,7 +26,6 @@ class FolderModel extends Folder {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'title': title,
       'parentFolderId': parentFolderId,
       'createdBy': createdBy,

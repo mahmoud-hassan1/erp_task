@@ -65,7 +65,7 @@ class HomeCubit extends Cubit<HomeState> {
     result.fold(
       (error) => emit(FolderError(error.toString())),
       (_) { 
-        emit(FolderLoaded(folder));
+        emit(FolderLoaded("Folder created successfully"));
         loadContent(folder.parentFolderId);
       },
     );
@@ -78,7 +78,7 @@ class HomeCubit extends Cubit<HomeState> {
       (error) => emit(DocumentError(error.toString())),
       (_) {
 
-        emit(DocumentLoaded(document));
+        emit(DocumentLoaded("Document created successfully"));
         loadContent(document.parentFolderId);
       },
     );
@@ -90,12 +90,37 @@ class HomeCubit extends Cubit<HomeState> {
     result.fold(
       (error) => emit(DocumentError(error.toString())),
       (_) {
-        emit(DocumentLoaded(document));
+        emit(DocumentLoaded("Document updated successfully"));
         loadContent(document.parentFolderId);
       },
     );
   }
 
+  Future<void> deleteDocument(Document document) async {
+    emit(DocumentLoading());
+    final result = await _repository.deleteDocument(document);
+    result.fold(
+      (error) => emit(DocumentError(error.toString())),
+      (_) {
+        emit(DocumentLoaded("Document deleted successfully"));
+        loadContent(document.parentFolderId);
+      },
+    );
+  }
+
+  Future<void> deleteFolder(Folder folder) async {
+    emit(FolderLoading());
+    final result = await _repository.deleteFolder(folder);
+    result.fold(
+      (error) => emit(FolderError(error.toString())),
+      (_) {
+        emit(FolderLoaded("Folder deleted successfully"));
+        loadContent(folder.parentFolderId);
+      },
+    );
+  }
+  
+  
   // void test() {
   //   emit(HomeLoaded(
   //     folders: foldersList,
@@ -154,7 +179,7 @@ Future<void> updateFolder(Folder folder) async {
   result.fold(
     (error) => emit(FolderError(error.toString())),
     (_) {
-      emit(FolderLoaded(folder));
+      emit(FolderLoaded("Folder updated successfully"));
       loadContent(folder.parentFolderId);
     }
   );

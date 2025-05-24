@@ -45,7 +45,6 @@ class DocumentModel extends Document {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'parentFolderId': parentFolderId,
       'title': title,
       'tags': tags,
