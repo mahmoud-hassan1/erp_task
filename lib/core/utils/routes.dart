@@ -9,6 +9,7 @@ import 'package:erp_task/features/home/domain/usecases/get_documents.dart';
 import 'package:erp_task/features/home/domain/usecases/get_folders.dart';
 import 'package:erp_task/features/home/presentation/cubit/home_cubit.dart';
 import 'package:erp_task/features/home/presentation/views/add_document_view/add_document_view.dart';
+import 'package:erp_task/features/home/presentation/views/document_view/document_view.dart';
 import 'package:erp_task/features/home/presentation/views/edit_document_view/edit_document_view.dart';
 import 'package:erp_task/features/home/presentation/views/home_view/home_view.dart';
 import 'package:erp_task/features/auth/presentation/views/login_view.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String addDocument = '/add-document';
   static const String editDocument = '/edit-document';
+  static const String documentView = '/document-view';
   static final GoRouter router = GoRouter(
     initialLocation: login,
     routes: [
@@ -88,6 +90,7 @@ class AppRoutes {
           final parentFolderId = extras?[0] as String?;
           final path = extras?[1] as String;
           final cubit = extras?[2] as HomeCubit;
+          cubit.selectedDocFile = null;
           return BlocProvider.value(
             value: cubit,
             child: AddDocumentView(parentFolderId: parentFolderId, path: path),
@@ -103,6 +106,7 @@ class AppRoutes {
           final parentFolderId = extras?[1] as String?;
           final path = extras?[2] as String;
           final cubit = extras?[3] as HomeCubit;
+          cubit.selectedDocFile = null;
           return BlocProvider.value(
             value: cubit,
             child: EditDocumentView(document: document, parentFolderId: parentFolderId, path: path),
@@ -116,6 +120,18 @@ class AppRoutes {
           create: (context) => AuthCubit(GetIt.instance.get<AuthRepository>()),
           child: const ForgotPasswordView(),
         ),
+      ),
+      GoRoute(
+        path: documentView,
+        name: 'document-view',
+        builder: (context, state) {
+          final extras = state.extra as List<dynamic>?;
+          final document = extras?[0] as Document;
+          return BlocProvider(
+            create: (context) => AuthCubit(GetIt.instance.get<AuthRepository>()),
+            child: DocumentView(document: document),
+          );
+        },
       ),
     ],
   );

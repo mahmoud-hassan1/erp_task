@@ -113,7 +113,7 @@ class _HomeViewState extends State<HomeView> {
             ...context
                 .read<HomeCubit>()
                 .documentsList
-                .map((doc) => DocumentTile(document: doc, currentUserEmail: currentUserEmail ?? '', parentFolderId: widget.parentFolderId ?? '', path: widget.path)),
+                .map((doc) => DocumentTile(document: doc, currentUserEmail: currentUserEmail ?? '', parentFolderId: widget.parentFolderId , path: widget.path)),
           ],
         ),
       ),

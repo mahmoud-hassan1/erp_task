@@ -80,14 +80,13 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<Either<Exception, void>> createDocument(
       Document document, String path, File file) async {
     try {
-      final fileName = file.path.split('/').last;
+     
       final fileUrl = await uploadFile(
-          path, file.readAsBytesSync(), fileName);
+          path, file.readAsBytesSync(), document.title);
       return fileUrl.fold(
         (error) => Left(error),
         (url) async {
           document.docLink = url;
-          document.title = fileName;
           final documentModel = DocumentModel.fromEntity(document);
 
           await _firestore.collection('documents').add(
@@ -101,74 +100,7 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  // @override
-  // Future<Either<Exception, void>> updateFolderPermissions(
-  //   String folderId,
-  //   Map<String, String> permissions,
-  // ) async {
-  //   try {
-  //     await _firestore.collection('folders').doc(folderId).update({
-  //       'permissions': permissions,
-  //     });
-  //     return const Right(null);
-  //   } catch (e) {
-  //     return Left(Exception(e.toString()));
-  //   }
-  // }
 
-  // @override
-  // Future<Either<Exception, void>> updateDocumentPermissions(
-  //   String documentId,
-  //   Map<String, String> permissions,
-  // ) async {
-  //   try {
-  //     await _firestore.collection('documents').doc(documentId).update({
-  //       'permissions': permissions,
-  //     });
-  //     return const Right(null);
-  //   } catch (e) {
-  //     return Left(Exception(e.toString()));
-  //   }
-  // }
-
-  @override
-  Future<Either<Exception, void>> addComment(
-      String documentId, Comment comment) async {
-    try {
-      final commentData = {
-        'userId': comment.userId,
-        'text': comment.text,
-        'createdAt': Timestamp.fromDate(comment.createdAt),
-      };
-
-      await _firestore.collection('documents').doc(documentId).update({
-        'comments': FieldValue.arrayUnion([commentData]),
-      });
-      return const Right(null);
-    } catch (e) {
-      return Left(Exception(e.toString()));
-    }
-  }
-
-  // @override
-  // Future<Either<Exception, void>> addVersion(
-  //     String documentId, Version version) async {
-  //   try {
-  //     final versionData = {
-  //       'version': version.version,
-  //       'docLink': version.docLink,
-  //       'uploadedAt': Timestamp.fromDate(version.uploadedAt),
-  //     };
-
-  //     await _firestore.collection('documents').doc(documentId).update({
-  //       'versionHistory': FieldValue.arrayUnion([versionData]),
-  //       'currentVersion': version.version,
-  //     });
-  //     return const Right(null);
-  //   } catch (e) {
-  //     return Left(Exception(e.toString()));
-  //   }
-  // }
 
   @override
   Future<Either<Exception, String>> uploadFile(
@@ -198,14 +130,14 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<Either<Exception, void>> updateDocument(Document document,String path,File? file) async {
     try {
       if (file != null) {
-        final fileName = file.path.split('/').last;
+
         final fileUrl = await uploadFile(
-            path, file.readAsBytesSync(), fileName);
+            path, file.readAsBytesSync(), document.title);
         return fileUrl.fold(
           (error) => Left(error),
           (url) async {
             document.docLink = url;
-            document.title = fileName;
+        
             await _firestore.collection('documents').doc(document.id).update(DocumentModel.fromEntity(document).toJson());
             return const Right(null);
           },

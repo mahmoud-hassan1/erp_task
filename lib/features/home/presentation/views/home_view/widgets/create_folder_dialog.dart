@@ -40,6 +40,7 @@ class _CreateFolderDialogState extends State<CreateFolderDialog> {
             showSnackBar(context, content: state.message);
           } 
           else if (state is FolderLoaded) {
+            showSnackBar(context, content: state.message,color: Colors.green);
             Navigator.pop(context);
           }
         

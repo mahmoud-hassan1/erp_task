@@ -1,3 +1,4 @@
+
 import 'package:erp_task/core/utils/routes.dart';
 import 'package:erp_task/core/utils/widgets/show_snack_bar.dart';
 import 'package:erp_task/features/home/domain/entities/document.dart';
@@ -5,23 +6,56 @@ import 'package:erp_task/features/home/presentation/cubit/home_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DocumentTile extends StatelessWidget {
-  const DocumentTile({super.key, required this.document,  required this.currentUserEmail, required this.parentFolderId, required this.path});
+  const DocumentTile({super.key, required this.document,  required this.currentUserEmail,  this.parentFolderId, required this.path});
   final Document document;
   final String currentUserEmail;
-  final String parentFolderId;
+  final String? parentFolderId;
   final String path;  
 
 
   @override
   Widget build(BuildContext context) {
+    int titleFlex= 1;
+    int tagsFlex= 1;
+      if(document.tags.join(', ').length-document.title.length<-10){
+        titleFlex= 2;
+        tagsFlex= 1;
+      }
+   
     return ListTile(
-      leading: Icon(_getDocumentIcon(document.type)),
-      title: Text(document.title),
-      subtitle: Text(document.type),
+      leading: _getDocumentIcon(document.type),
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: titleFlex,
+            child: Text(
+              '${document.title}.${document.type}',
+              style: const TextStyle(fontSize: 16),
+              softWrap: true,
+              maxLines: null,
+    
+              overflow: TextOverflow.visible,
+            ),
+          ),
+          const SizedBox(width: 8),
+          if (document.tags.isNotEmpty)
+            Expanded(
+              flex: tagsFlex,
+              child: Text(
+                document.tags.join(', '),
+                style: const TextStyle(fontSize: 12),
+                softWrap: true,
+                maxLines: null,
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+        ],
+      ),
       onTap: () => _openDocument(context, document),
       onLongPress: () => canEditDocument(document)
           ? GoRouter.of(context).push(AppRoutes.editDocument, extra: [
@@ -34,56 +68,38 @@ class DocumentTile extends StatelessWidget {
               content: 'You don\'t have permission to edit this document'),
     );
   }
-    IconData _getDocumentIcon(String type) {
+    Icon _getDocumentIcon(String type) {
     switch (type.toLowerCase()) {
       case 'pdf':
-        return Icons.picture_as_pdf;
+        return const Icon(Icons.picture_as_pdf,color: Colors.redAccent,);
       case 'doc':
       case 'docx':
-        return Icons.description;
+        return const Icon(Icons.description,color: Colors.blue,);
       case 'xls':
       case 'xlsx':
-        return Icons.table_chart;
+        return const Icon(Icons.table_chart);
       default:
-        return Icons.insert_drive_file;
+        return const Icon(Icons.insert_drive_file);
     }
   }
 
   void _openDocument(BuildContext context, Document document) async {
     try {
       if (document.type.toLowerCase() == 'pdf') {
-        // Open PDF in the app using SfPdfViewer
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(
-                title: Text(document.title),
-              ),
-              body: SfPdfViewer.network(document.docLink),
-            ),
-          ),
-        );
+  
+        GoRouter.of(context).push(AppRoutes.documentView, extra: [document]);
       } else if (document.type.toLowerCase() == 'doc' || 
                  document.type.toLowerCase() == 'docx' ||
                  document.type.toLowerCase() == 'xls' ||
                  document.type.toLowerCase() == 'xlsx') {
-        // Open Office files in web viewer
-        final Uri url = Uri.parse('https://view.officeapps.live.com/op/embed.aspx?src=${Uri.encodeComponent(document.docLink)}');
+
+        final Uri url = Uri.parse(document.docLink);
         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
           if (context.mounted) {
           showSnackBar(context, content: 'Could not open the document in web viewer');
           }
         }
-      } else {
-        // For other file types, try to open with the device's default app
-        final Uri url = Uri.parse(document.docLink);
-        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-          if (context.mounted) {
-            showSnackBar(context, content: 'Could not open the document');
-          }
-        }
-      }
+      } 
     } catch (e) {
       if (context.mounted) {
         showSnackBar(context, content: 'Error opening document: $e');
@@ -95,5 +111,19 @@ class DocumentTile extends StatelessWidget {
     return document.createdBy == currentUserEmail || document.permissions.edit.contains(currentUserEmail);
   }
 
+// Future<void> downloadAndOpenDoc(String url, String fileName) async {
+//   try {
+//     final dir = await getTemporaryDirectory();
+//     final filePath = '${dir.path}/$fileName';
+    
+//     // Download file
+//     await Dio().download(url, filePath);
 
+//     // Open it with system default app
+//     final result = await OpenFilex.open(filePath);
+//     print('File opened: ${result.message}');
+//   } catch (e) {
+//     print('Error opening file: $e');
+//   }
+// }
 }

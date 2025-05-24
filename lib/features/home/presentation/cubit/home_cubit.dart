@@ -29,6 +29,7 @@ class HomeCubit extends Cubit<HomeState> {
         _createFolder = createFolder,
         _createDocument = createDocument,
         super(HomeInitial());
+  File? selectedDocFile;
 
   List<Folder> foldersList = [];
   List<Document> documentsList = [];
@@ -121,57 +122,6 @@ class HomeCubit extends Cubit<HomeState> {
   }
   
   
-  // void test() {
-  //   emit(HomeLoaded(
-  //     folders: foldersList,
-  //     documents: documentsList,
-  //   ));
-  // }
-
-  // Future<void> updateFolderPermissions(String folderId, Map<String, String> permissions) async {
-  //   emit(HomeLoading());
-
-  //   final result = await repository.updateFolderPermissions(folderId, permissions);
-  //   result.fold(
-  //     (error) => emit(HomeError(error.toString())),
-  //     (_) {
-  //       if (state is HomeLoaded) {
-  //         final currentState = state as HomeLoaded;
-  //         loadContent(currentState.folders.length > 1 ? currentState.folders.last.id : null);
-  //       }
-  //     },
-  //   );
-  // }
-
-  // Future<void> updateDocumentPermissions(String documentId, Map<String, String> permissions) async {
-  //   emit(HomeLoading());
-
-  //   final result = await repository.updateDocumentPermissions(documentId, permissions);
-  //   result.fold(
-  //     (error) => emit(HomeError(error.toString())),
-  //     (_) {
-  //       if (state is HomeLoaded) {
-  //         final currentState = state as HomeLoaded;
-  //         loadContent(currentState.folders.length > 1 ? currentState.folders.last.id : null);
-  //       }
-  //     },
-  //   );
-  // }
-
-  Future<void> addComment(String documentId, Comment comment) async {
-    emit(HomeLoading());
-
-    final result = await _repository.addComment(documentId, comment);
-    result.fold(
-      (error) => emit(HomeError(error.toString())),
-      (_) {
-        if (state is HomeLoaded) {
-          final currentState = state as HomeLoaded;
-          loadContent(currentState.folders.length > 1 ? currentState.folders.last.id : null);
-        }
-      },
-    );
-  }
 
 Future<void> updateFolder(Folder folder) async {
   emit(FolderLoading());
