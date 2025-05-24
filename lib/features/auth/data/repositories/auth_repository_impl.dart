@@ -104,4 +104,14 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(Exception(AppStrings.failedToGetCurrentUserEmail));
     }
   }
+
+  @override
+  Future<Either<Exception, void>> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      return const Right(null);
+    } catch (e) {
+      return Left(Exception(e.toString()));
+    }
+  }
 }

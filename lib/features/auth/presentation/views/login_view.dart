@@ -115,6 +115,12 @@ class _LoginViewState extends State<LoginView> {
                       },
                       child: const Text('Don\'t have an account? Sign up'),
                     ),
+                    TextButton(
+                      onPressed: () {
+                        context.push(AppRoutes.forgotPassword);
+                      },
+                      child: const Text('Forgot Password?'),
+                    ),
                   ],
                 ),
                 ),

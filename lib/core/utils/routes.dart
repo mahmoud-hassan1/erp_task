@@ -1,5 +1,6 @@
 import 'package:erp_task/features/auth/domain/repositories/auth_repository.dart';
 import 'package:erp_task/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:erp_task/features/auth/presentation/views/forgot_password_view.dart';
 import 'package:erp_task/features/home/domain/entities/document.dart';
 import 'package:erp_task/features/home/domain/repositories/home_repository.dart';
 import 'package:erp_task/features/home/domain/usecases/create_document.dart';
@@ -18,10 +19,11 @@ import 'package:go_router/go_router.dart';
 import 'package:get_it/get_it.dart';
 
 class AppRoutes {
-  static const String login = '/login';
+  static const String login = '/';
   static const String signup = '/signup';
   static const String verifyEmail = '/verify-email';
   static const String home = '/home';
+  static const String forgotPassword = '/forgot-password';
   static const String addDocument = '/add-document';
   static const String editDocument = '/edit-document';
   static final GoRouter router = GoRouter(
@@ -29,7 +31,7 @@ class AppRoutes {
     routes: [
       GoRoute(
         path: login,
-        name: 'login',
+        name: '/',
         builder: (context, state) => BlocProvider(
           create: (context) => AuthCubit(GetIt.instance.get<AuthRepository>())
             ..checkAuthStatus(),
@@ -106,6 +108,14 @@ class AppRoutes {
             child: EditDocumentView(document: document, parentFolderId: parentFolderId, path: path),
           );
         },
+      ),
+      GoRoute(  
+        path: forgotPassword,
+        name: 'forgot-password',
+        builder: (context, state) => BlocProvider(
+          create: (context) => AuthCubit(GetIt.instance.get<AuthRepository>()),
+          child: const ForgotPasswordView(),
+        ),
       ),
     ],
   );

@@ -26,3 +26,5 @@ class GetEmailError extends AuthState {
   final String message;
   GetEmailError(this.message);
 }
+
+class AuthPasswordResetEmailSent extends AuthState {}

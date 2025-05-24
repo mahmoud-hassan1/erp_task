@@ -72,12 +72,7 @@ class DocumentTile extends StatelessWidget {
         final Uri url = Uri.parse('https://view.officeapps.live.com/op/embed.aspx?src=${Uri.encodeComponent(document.docLink)}');
         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Could not open the document in web viewer'),
-                backgroundColor: Colors.red,
-              ),
-            );
+          showSnackBar(context, content: 'Could not open the document in web viewer');
           }
         }
       } else {
@@ -85,12 +80,7 @@ class DocumentTile extends StatelessWidget {
         final Uri url = Uri.parse(document.docLink);
         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Could not open the document'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            showSnackBar(context, content: 'Could not open the document');
           }
         }
       }
