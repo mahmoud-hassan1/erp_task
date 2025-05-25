@@ -14,10 +14,16 @@ class GetDocuments {
       (error) => Left(error),
       (documents) {
         final currentUser = authRepository.getCurrentUserEmail();
-       return currentUser.fold(
+        return currentUser.fold(
           (error) => Left(error),
           (user) {
-            final filteredDocuments = documents.where((doc) => doc.isPublic || doc.createdBy == user).toList();
+            final filteredDocuments = documents
+                .where((doc) =>
+                    doc.isPublic ||
+                    doc.createdBy == user ||
+                    doc.permissions.edit.contains(user) ||
+                    doc.permissions.view.contains(user))
+                .toList();
             filteredDocuments.sort((a, b) => a.title.compareTo(b.title));
             return Right(filteredDocuments);
           },
@@ -25,4 +31,4 @@ class GetDocuments {
       },
     );
   }
-} 
+}
