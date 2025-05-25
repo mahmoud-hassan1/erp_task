@@ -125,7 +125,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- Your Name - Initial work - [mahmoud-hassan1 ](https://github.com/mahmoud-hassan1)
+- Mahmoud Hassan- Initial work - [mahmoud-hassan1 ](https://github.com/mahmoud-hassan1)
 
 ## 🙏 Acknowledgments
 
