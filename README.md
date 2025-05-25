@@ -126,13 +126,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👥 Authors
 
 - Mahmoud Hassan- Initial work - [mahmoud-hassan1 ](https://github.com/mahmoud-hassan1)
-
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Firebase team for the backend services
-- All contributors who have helped shape this project
-
+  
 ## 📞 Support
 
 For support, email mahmoudhassan10191019@gnail.com or open an issue in the repository.
